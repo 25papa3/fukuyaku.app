@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#0f766e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="服薬状況">
+<link rel="icon" href="data:,">
+<title>服薬状況アプリ HTML版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f3;
+    --surface:#ffffff;
+    --surface-2:#eef2ee;
+    --ink:#17251f;
+    --ink-2:#4a5a52;
+    --ink-3:#7c8b83;
+    --line:#dde4dd;
+    --teal:#0f766e;
+    --teal-dark:#0b5e57;
+    --teal-soft:#e0f2ef;
+    --amber:#b45309;
+    --amber-dark:#92400e;
+    --amber-soft:#fdf0dc;
+    --red:#b42318;
+    --red-soft:#fdecea;
+    --shadow:0 10px 28px rgba(23,37,31,.10);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#101613;
+      --surface:#1a221e;
+      --surface-2:#222c27;
+      --ink:#eef4f0;
+      --ink-2:#b9c6be;
+      --ink-3:#8b9a91;
+      --line:#2e3a34;
+      --teal:#2dd4bf;
+      --teal-dark:#5eead4;
+      --teal-soft:#12332e;
+      --amber:#fbbf24;
+      --amber-dark:#fcd34d;
+      --amber-soft:#3a2c10;
+      --red:#f97066;
+      --red-soft:#3d1a16;
+      --shadow:0 10px 28px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+    line-height:1.55;
+  }
+  button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  button:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+
+  .wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
+
+  /* ---------- 共通 ---------- */
+  .date-line{
+    display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+    margin:2px 2px 14px;
+  }
+  .date-line .today{font-size:20px;font-weight:900;letter-spacing:.01em}
+  .date-line .today small{font-size:13px;font-weight:700;color:var(--ink-2);margin-left:6px}
+  .date-line .clock{font-size:13px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+  }
+
+  /* ---------- ホーム（選択画面） ---------- */
+  .big-actions{display:grid;gap:14px}
+  .big-btn{
+    display:flex;align-items:center;gap:16px;width:100%;
+    min-height:96px;padding:18px 20px;
+    border-radius:20px;border:1.5px solid transparent;
+    text-align:left;background:var(--surface);
+    box-shadow:var(--shadow);
+    transition:transform .08s ease, box-shadow .15s ease;
+  }
+  .big-btn:active{transform:scale(.985)}
+  .big-btn .ic{
+    flex:0 0 auto;width:60px;height:60px;border-radius:16px;
+    display:grid;place-items:center;
+  }
+  .big-btn .ic svg{width:32px;height:32px}
+  .big-btn .tx b{display:block;font-size:24px;font-weight:900;line-height:1.2}
+  .big-btn .tx span{display:block;font-size:13px;color:var(--ink-2);margin-top:3px;font-weight:500}
+  .big-btn .arrow{margin-left:auto;font-size:22px;color:var(--ink-3);font-weight:700}
+
+  .btn-meal{border-color:#f0ddba}
+  .btn-meal .ic{background:var(--amber-soft);color:var(--amber)}
+  .btn-med{border-color:#bfe3dd}
+  .btn-med .ic{background:var(--teal-soft);color:var(--teal)}
+  .btn-status{border-color:var(--line)}
+  .btn-status .ic{background:var(--surface-2);color:var(--ink-2)}
+  @media (prefers-color-scheme: dark){
+    .btn-meal{border-color:#57451c}
+    .btn-med{border-color:#1d4a43}
+  }
+
+  .today-box{margin-top:16px;padding:16px 18px}
+  .today-box h2{margin:0 0 10px;font-size:14px;font-weight:900;color:var(--ink-2);letter-spacing:.04em}
+  .today-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{
+    border-radius:14px;padding:12px 14px;background:var(--surface-2);
+  }
+  .stat .n{font-size:28px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .n small{font-size:14px;font-weight:700}
+  .stat .l{font-size:12.5px;font-weight:700;color:var(--ink-2);margin-top:5px}
+  .stat.med .n{color:var(--teal)}
+  .stat.meal .n{color:var(--amber)}
+  .today-times{margin-top:12px;font-size:13.5px;color:var(--ink-2)}
+  .today-times div{display:flex;gap:8px;padding:5px 0;border-top:1px dashed var(--line)}
+  .today-times div:first-child{border-top:none}
+  .today-times .tag{flex:0 0 auto;font-weight:900;font-size:12px;padding:1px 8px;border-radius:999px;height:fit-content;margin-top:1px}
+  .tag.med{background:var(--teal-soft);color:var(--teal)}
+  .tag.meal{background:var(--amber-soft);color:var(--amber)}
+  .today-empty{font-size:13.5px;color:var(--ink-3);margin:2px 0 0}
+
+  .util{margin-top:22px}
+  .util-card{padding:16px 18px}
+  .util-card h2{margin:0 0 6px;font-size:15px;font-weight:900}
+  .util-card p{margin:0 0 12px;font-size:13px;color:var(--ink-2)}
+  .btn-download{
+    width:100%;min-height:52px;border-radius:14px;border:none;
+    background:var(--ink);color:var(--bg);
+    font-size:15px;font-weight:900;padding:12px 16px;
+  }
+  .btn-download:active{opacity:.85}
+  .util-note{margin-top:10px !important;font-size:12px !important;color:var(--ink-3) !important}
+
+  /* ---------- 記録完了画面 ---------- */
+  .done{padding:30px 22px 24px;text-align:center}
+  .done-badge{
+    width:84px;height:84px;margin:0 auto 16px;border-radius:50%;
+    display:grid;place-items:center;
+  }
+  .done-badge svg{width:42px;height:42px}
+  .done-badge.med{background:var(--teal-soft);color:var(--teal)}
+  .done-badge.meal{background:var(--amber-soft);color:var(--amber)}
+  .done h2{margin:0;font-size:24px;font-weight:900}
+  .done .when{margin:8px 0 4px;font-size:17px;font-weight:700;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .done .sub{margin:0 0 22px;font-size:13px;color:var(--ink-3)}
+  .stack{display:grid;gap:10px}
+  .btn-primary{
+    min-height:58px;border-radius:16px;border:none;
+    background:var(--teal);color:#fff;font-size:17px;font-weight:900;padding:14px;
+  }
+  .btn-primary:active{background:var(--teal-dark)}
+  @media (prefers-color-scheme: dark){ .btn-primary{color:#06231f} .btn-primary:active{background:var(--teal-dark)} }
+  .btn-ghost{
+    min-height:54px;border-radius:16px;border:1.5px solid var(--line);
+    background:var(--surface);color:var(--ink);font-size:16px;font-weight:800;padding:12px;
+  }
+  .btn-ghost:active{background:var(--surface-2)}
+  .btn-undo{
+    min-height:48px;border:none;background:none;color:var(--red);
+    font-size:14.5px;font-weight:800;padding:10px;text-decoration:underline;text-underline-offset:3px;
+  }
+  .toast{
+    margin-top:14px;padding:12px 14px;border-radius:12px;
+    background:var(--teal-soft);color:var(--teal);font-size:14px;font-weight:800;text-align:center;
+  }
+
+  /* ---------- 状況等（カレンダー） ---------- */
+  .status-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .btn-back{
+    min-height:44px;padding:8px 16px;border-radius:999px;
+    border:1.5px solid var(--line);background:var(--surface);
+    font-size:15px;font-weight:800;color:var(--ink);
+  }
+  .status-head h2{margin:0;font-size:22px;font-weight:900}
+
+  .month-card{padding:16px 14px 14px}
+  .month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .month-nav .label{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+  .nav-btn{
+    min-width:48px;min-height:48px;border-radius:14px;
+    border:1.5px solid var(--line);background:var(--surface);
+    font-size:19px;font-weight:900;color:var(--ink);padding:8px 12px;
+  }
+  .nav-btn:active{background:var(--surface-2)}
+  .nav-btn.today-jump{font-size:13.5px;min-width:0}
+
+  .month-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+  .msum{background:var(--surface-2);border-radius:12px;padding:10px 8px;text-align:center}
+  .msum .n{font-size:21px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+  .msum .n small{font-size:12px}
+  .msum .l{font-size:11.5px;font-weight:700;color:var(--ink-2);margin-top:2px}
+  .msum.med .n{color:var(--teal)}
+  .msum.meal .n{color:var(--amber)}
+
+  .cal-head,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .cal-head div{
+    text-align:center;font-size:12px;font-weight:900;color:var(--ink-3);padding:4px 0;
+  }
+  .cal-head div.sun{color:#d64541}
+  .cal-head div.sat{color:#3b6fd4}
+  @media (prefers-color-scheme: dark){
+    .cal-head div.sun{color:#f08a84}
+    .cal-head div.sat{color:#8fb2f5}
+  }
+  .day{
+    position:relative;min-height:58px;border-radius:12px;border:1.5px solid transparent;
+    background:none;padding:5px 3px 4px;text-align:center;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  .day .dnum{
+    font-size:14.5px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums;
+    width:26px;height:26px;display:grid;place-items:center;border-radius:50%;
+  }
+  .day.other{opacity:.32}
+  .day.is-today .dnum{background:var(--ink);color:var(--bg)}
+  .day.selected{border-color:var(--teal);background:var(--teal-soft)}
+  .day.selected.is-today .dnum{background:var(--teal);color:#fff}
+  .badges{display:flex;flex-direction:column;gap:2px;width:100%;align-items:center}
+  .bdg{
+    font-size:10.5px;font-weight:900;line-height:1;padding:2.5px 6px;border-radius:999px;
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  .bdg.med{background:var(--teal-soft);color:var(--teal)}
+  .bdg.meal{background:var(--amber-soft);color:var(--amber)}
+  .day.selected .bdg.med{background:var(--surface);color:var(--teal)}
+  .day.selected .bdg.meal{background:var(--surface);color:var(--amber)}
+
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12px;color:var(--ink-2);font-weight:700}
+  .legend .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+  .legend .dot.med{background:var(--teal)}
+  .legend .dot.meal{background:var(--amber)}
+
+  .detail{margin-top:16px;padding:18px}
+  .detail h3{margin:0 0 4px;font-size:17px;font-weight:900}
+  .detail .dsub{margin:0 0 12px;font-size:13px;color:var(--ink-2)}
+  .rec-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .rec{
+    display:flex;align-items:center;gap:12px;
+    background:var(--surface-2);border-radius:14px;padding:12px 14px;
+  }
+  .rec .ic{flex:0 0 auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+  .rec .ic svg{width:22px;height:22px}
+  .rec .ic.med{background:var(--teal-soft);color:var(--teal)}
+  .rec .ic.meal{background:var(--amber-soft);color:var(--amber)}
+  .rec .rt b{display:block;font-size:16px;font-weight:900}
+  .rec .rt span{display:block;font-size:12.5px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  .rec .del{
+    margin-left:auto;min-height:44px;padding:8px 14px;border-radius:10px;
+    border:1.5px solid var(--line);background:var(--surface);
+    color:var(--red);font-size:13.5px;font-weight:800;
+  }
+  .detail-empty{margin:6px 0 2px;font-size:14px;color:var(--ink-3);text-align:center;padding:14px 0}
+
+  .status-foot{margin-top:16px}
+  .hidden{display:none !important}
+
+  @media (min-width:560px){
+    .wrap{padding-top:28px}
+    .day{min-height:64px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 画面1：選択画面 ===== -->
+  <section id="view-home">
+    <div class="date-line">
+      <div class="today"><span id="today-date">—</span><small id="today-week">—</small></div>
+      <div class="clock" id="now-clock">--:--</div>
+    </div>
+
+    <div class="big-actions">
+      <button class="big-btn btn-meal" id="btn-meal" type="button">
+        <span class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16"/><path d="M5 11c0 4.4 3.1 8 7 8s7-3.6 7-8"/><path d="M8.5 7.5c1-1.2 2.2-1.8 3.5-1.8s2.5.6 3.5 1.8"/><path d="M12 3v1.2"/></svg>
+        </span>
+        <span class="tx"><b>食事</b><span>食べたら押してください。今の時刻で記録します</span></span>
+        <span class="arrow" aria-hidden="true">›</span>
+      </button>
+
+      <button class="big-btn btn-med" id="btn-med" type="button">
+        <span class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8.6" width="18.4" height="6.8" rx="3.4" transform="rotate(-45 12 12)"/><path d="M8.4 8.4l7.2 7.2"/></svg>
+        </span>
+        <span class="tx"><b>服薬</b><span>お薬を飲んだら押してください。今の時刻で記録します</span></span>
+        <span class="arrow" aria-hidden="true">›</span>
+      </button>
+
+      <button class="big-btn btn-status" id="btn-status" type="button">
+        <span class="ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3v4M16 3v4"/><path d="M7.5 14.5h3M13.5 14.5h3M7.5 17.5h3"/></svg>
+        </span>
+        <span class="tx"><b>状況等</b><span>食事と服薬の記録をカレンダーで確認します</span></span>
+        <span class="arrow" aria-hidden="true">›</span>
+      </button>
+    </div>
+
+    <div class="card today-box">
+      <h2>今日の記録</h2>
+      <div class="today-stats">
+        <div class="stat med"><div class="n"><span id="today-med-count">0</span><small> 回</small></div><div class="l">服薬</div></div>
+        <div class="stat meal"><div class="n"><span id="today-meal-count">0</span><small> 回</small></div><div class="l">食事</div></div>
+      </div>
+      <div id="today-times"></div>
+    </div>
+
+    <div class="util">
+      <div class="card util-card">
+        <h2>家族と使うとき（GitHub Pages用ファイル）</h2>
+        <p>下のボタンで、このアプリを1つのHTMLファイルとして保存できます。そのファイルを <b>index.html</b> という名前にして GitHub Pages に置けば、家族それぞれのスマホで開いて使えます。スマホの「ホーム画面に追加」をすると、アプリアイコンから起動できます。</p>
+        <button class="btn-download" id="btn-download" type="button">HTMLファイルをダウンロード</button>
+        <p class="util-note">記録は各スマホの中だけに保存されます（家族の記録が自動で合算されることはありません）。このページで使う場合も、記録はこの端末に残ります。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 画面2：記録完了 ===== -->
+  <section id="view-done" class="hidden">
+    <div class="card done">
+      <div class="done-badge med" id="done-badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5L19.5 7"/></svg>
+      </div>
+      <h2 id="done-title">記録しました</h2>
+      <p class="when" id="done-when">—</p>
+      <p class="sub">おつかれさまでした。このまま閉じても記録は残ります。</p>
+      <div class="stack">
+        <button class="btn-primary" id="btn-done-status" type="button">状況等を見る</button>
+        <button class="btn-ghost" id="btn-done-logout" type="button">ログアウト（最初に戻る）</button>
+        <button class="btn-undo" id="btn-undo" type="button">まちがえた場合はこちら：この記録を取り消す</button>
+      </div>
+      <div class="toast hidden" id="done-toast" role="status"></div>
+    </div>
+  </section>
+
+  <!-- ===== 画面3：状況等（カレンダー） ===== -->
+  <section id="view-status" class="hidden">
+    <div class="status-head">
+      <button class="btn-back" id="btn-back-home" type="button">← 戻る</button>
+      <h2>状況等</h2>
+    </div>
+
+    <div class="card month-card">
+      <div class="month-nav">
+        <button class="nav-btn" id="btn-prev-month" type="button" aria-label="前の月">‹</button>
+        <div class="label" id="month-label">—</div>
+        <div style="display:flex;gap:6px">
+          <button class="nav-btn today-jump" id="btn-this-month" type="button">今月</button>
+          <button class="nav-btn" id="btn-next-month" type="button" aria-label="次の月">›</button>
+        </div>
+      </div>
+
+      <div class="month-summary">
+        <div class="msum med"><div class="n"><span id="msum-med">0</span><small> 回</small></div><div class="l">服薬（この月）</div></div>
+        <div class="msum meal"><div class="n"><span id="msum-meal">0</span><small> 回</small></div><div class="l">食事（この月）</div></div>
+        <div class="msum"><div class="n"><span id="msum-days">0</span><small> 日</small></div><div class="l">記録のある日</div></div>
+      </div>
+
+      <div class="cal-head" aria-hidden="true">
+        <div class="sun">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="sat">土</div>
+      </div>
+      <div class="cal-grid" id="cal-grid" role="grid" aria-label="記録カレンダー"></div>
+
+      <div class="legend">
+        <span><span class="dot med"></span>薬 ＝ 服薬の回数</span>
+        <span><span class="dot meal"></span>食 ＝ 食事の回数</span>
+      </div>
+    </div>
+
+    <div class="card detail">
+      <h3 id="detail-date">—</h3>
+      <p class="dsub" id="detail-sub">—</p>
+      <ul class="rec-list" id="detail-list"></ul>
+      <p class="detail-empty hidden" id="detail-empty">この日の記録はありません。</p>
+    </div>
+
+    <div class="status-foot stack">
+      <button class="btn-ghost" id="btn-status-logout" type="button">ログアウト（最初に戻る）</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LS_KEY = "fukuyaku_records_v1";
+
+  /* ---------- 保存 ---------- */
+  function load(){
+    try{
+      var raw = localStorage.getItem(LS_KEY);
+      if(!raw) return [];
+      var arr = JSON.parse(raw);
+      if(!Array.isArray(arr)) return [];
+      return arr.filter(function(r){ return r && (r.type==="med"||r.type==="meal") && r.ts; });
+    }catch(e){ return []; }
+  }
+  function save(){
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(records)); }catch(e){}
+  }
+  var records = load();
+  var lastRecordId = null;
+
+  /* ---------- 日付ユーティリティ ---------- */
+  function pad(n){ return (n<10?"0":"")+n; }
+  function dateKeyOf(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function keyOfTs(ts){ var d=new Date(ts); return dateKeyOf(d); }
+  function fmtTime(ts){
+    var d=new Date(ts);
+    return pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+  function fmtFull(ts){
+    var d=new Date(ts);
+    var w=["日","月","火","水","木","金","土"][d.getDay()];
+    return (d.getMonth()+1)+"月"+d.getDate()+"日（"+w+"） "+fmtTime(ts);
+  }
+  var TYPE_LABEL = { med:"服薬", meal:"食事" };
+  var TYPE_BADGE = { med:"薬", meal:"食" };
+
+  /* ---------- 画面切り替え ---------- */
+  var views = {
+    home: document.getElementById("view-home"),
+    done: document.getElementById("view-done"),
+    status: document.getElementById("view-status")
+  };
+  function show(name){
+    views.home.classList.toggle("hidden", name!=="home");
+    views.done.classList.toggle("hidden", name!=="done");
+    views.status.classList.toggle("hidden", name!=="status");
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- ホーム：今日の表示 ---------- */
+  function renderHomeHead(){
+    var now = new Date();
+    var w=["日","月","火","水","木","金","土"][now.getDay()];
+    document.getElementById("today-date").textContent = (now.getMonth()+1)+"月"+now.getDate()+"日";
+    document.getElementById("today-week").textContent = w+"曜日";
+    document.getElementById("now-clock").textContent = "現在 "+fmtTime(now.getTime());
+  }
+  function renderToday(){
+    renderHomeHead();
+    var tk = dateKeyOf(new Date());
+    var todays = records.filter(function(r){ return keyOfTs(r.ts)===tk; })
+                        .sort(function(a,b){ return a.ts-b.ts; });
+    var med = todays.filter(function(r){ return r.type==="med"; }).length;
+    var meal = todays.filter(function(r){ return r.type==="meal"; }).length;
+    document.getElementById("today-med-count").textContent = med;
+    document.getElementById("today-meal-count").textContent = meal;
+    var box = document.getElementById("today-times");
+    box.innerHTML = "";
+    if(todays.length===0){
+      var p=document.createElement("p");
+      p.className="today-empty";
+      p.textContent="今日はまだ記録がありません。";
+      box.appendChild(p);
+      return;
+    }
+    todays.forEach(function(r){
+      var row=document.createElement("div");
+      var tag=document.createElement("span");
+      tag.className="tag "+r.type;
+      tag.textContent=TYPE_LABEL[r.type];
+      var t=document.createElement("span");
+      t.textContent=fmtTime(r.ts);
+      row.appendChild(tag); row.appendChild(t);
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- 記録する ---------- */
+  function doRecord(type){
+    var rec = { id: "r"+Date.now()+"_"+Math.floor(Math.random()*100000), type:type, ts:Date.now() };
+    records.push(rec);
+    lastRecordId = rec.id;
+    save();
+    var badge=document.getElementById("done-badge");
+    badge.className="done-badge "+type;
+    document.getElementById("done-title").textContent = TYPE_LABEL[type]+"を記録しました";
+    document.getElementById("done-when").textContent = fmtFull(rec.ts);
+    document.getElementById("done-toast").classList.add("hidden");
+    document.getElementById("btn-undo").classList.remove("hidden");
+    show("done");
+  }
+
+  /* ---------- カレンダー ---------- */
+  var now0 = new Date();
+  var viewY = now0.getFullYear(), viewM = now0.getMonth();
+  var selectedKey = dateKeyOf(now0);
+
+  function countsByDay(y, m){
+    var map = {};
+    records.forEach(function(r){
+      var d=new Date(r.ts);
+      if(d.getFullYear()===y && d.getMonth()===m){
+        var k=dateKeyOf(d);
+        if(!map[k]) map[k]={med:0,meal:0};
+        map[k][r.type]++;
+      }
+    });
+    return map;
+  }
+
+  function iconSvg(type){
+    if(type==="med"){
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="8.6" width="18.4" height="6.8" rx="3.4" transform="rotate(-45 12 12)"/><path d="M8.4 8.4l7.2 7.2"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16"/><path d="M5 11c0 4.4 3.1 8 7 8s7-3.6 7-8"/><path d="M8.5 7.5c1-1.2 2.2-1.8 3.5-1.8s2.5.6 3.5 1.8"/><path d="M12 3v1.2"/></svg>';
+  }
+
+  function renderCalendar(){
+    document.getElementById("month-label").textContent = viewY+"年 "+(viewM+1)+"月";
+    var counts = countsByDay(viewY, viewM);
+    var medTotal=0, mealTotal=0, dayCount=0;
+    Object.keys(counts).forEach(function(k){
+      medTotal+=counts[k].med; mealTotal+=counts[k].meal; dayCount++;
+    });
+    document.getElementById("msum-med").textContent = medTotal;
+    document.getElementById("msum-meal").textContent = mealTotal;
+    document.getElementById("msum-days").textContent = dayCount;
+
+    var grid=document.getElementById("cal-grid");
+    grid.innerHTML="";
+    var first=new Date(viewY, viewM, 1);
+    var startDow=first.getDay();
+    var start=new Date(viewY, viewM, 1-startDow);
+    var todayKey=dateKeyOf(new Date());
+
+    for(var i=0;i<42;i++){
+      var d=new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+      var k=dateKeyOf(d);
+      var inMonth = d.getMonth()===viewM;
+      var c=counts[k] && inMonth ? counts[k] : (counts[k]||null);
+      var cell=document.createElement("button");
+      cell.type="button";
+      cell.className="day"+(inMonth?"":" other")+(k===todayKey?" is-today":"")+(k===selectedKey?" selected":"");
+      cell.setAttribute("aria-label", (d.getMonth()+1)+"月"+d.getDate()+"日"+(c?(" 服薬"+c.med+"回 食事"+c.meal+"回"):" 記録なし"));
+
+      var num=document.createElement("span");
+      num.className="dnum";
+      num.textContent=d.getDate();
+      cell.appendChild(num);
+
+      if(c && (c.med>0 || c.meal>0)){
+        var bd=document.createElement("span");
+        bd.className="badges";
+        if(c.med>0){
+          var b1=document.createElement("span");
+          b1.className="bdg med";
+          b1.textContent="薬 "+c.med;
+          bd.appendChild(b1);
+        }
+        if(c.meal>0){
+          var b2=document.createElement("span");
+          b2.className="bdg meal";
+          b2.textContent="食 "+c.meal;
+          bd.appendChild(b2);
+        }
+        cell.appendChild(bd);
+      }
+      (function(key, yy, mm){
+        cell.addEventListener("click", function(){
+          selectedKey=key;
+          if(yy!==viewY || mm!==viewM){ viewY=yy; viewM=mm; }
+          renderCalendar();
+          renderDetail();
+        });
+      })(k, d.getFullYear(), d.getMonth());
+      grid.appendChild(cell);
+    }
+    renderDetail();
+  }
+
+  function renderDetail(){
+    var parts=selectedKey.split("-");
+    var d=new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+    var w=["日","月","火","水","木","金","土"][d.getDay()];
+    document.getElementById("detail-date").textContent =
+      d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日（"+w+"）";
+    var dayRecs=records.filter(function(r){ return keyOfTs(r.ts)===selectedKey; })
+                       .sort(function(a,b){ return a.ts-b.ts; });
+    var med=dayRecs.filter(function(r){return r.type==="med";}).length;
+    var meal=dayRecs.filter(function(r){return r.type==="meal";}).length;
+    document.getElementById("detail-sub").textContent =
+      dayRecs.length===0 ? "" : ("服薬 "+med+"回 ・ 食事 "+meal+"回");
+
+    var list=document.getElementById("detail-list");
+    list.innerHTML="";
+    document.getElementById("detail-empty").classList.toggle("hidden", dayRecs.length!==0);
+
+    dayRecs.forEach(function(r){
+      var li=document.createElement("li");
+      li.className="rec";
+      var ic=document.createElement("span");
+      ic.className="ic "+r.type;
+      ic.innerHTML=iconSvg(r.type);
+      var rt=document.createElement("span");
+      rt.className="rt";
+      var b=document.createElement("b");
+      b.textContent=TYPE_LABEL[r.type];
+      var s=document.createElement("span");
+      s.textContent=fmtTime(r.ts)+" に記録";
+      rt.appendChild(b); rt.appendChild(s);
+      var del=document.createElement("button");
+      del.type="button";
+      del.className="del";
+      del.textContent="削除";
+      del.setAttribute("aria-label", TYPE_LABEL[r.type]+" "+fmtTime(r.ts)+" の記録を削除");
+      del.addEventListener("click", function(){
+        records=records.filter(function(x){ return x.id!==r.id; });
+        save();
+        renderCalendar();
+        renderToday();
+      });
+      li.appendChild(ic); li.appendChild(rt); li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  /* ---------- HTMLファイルのダウンロード（GitHub Pages用） ---------- */
+  function downloadHtml(){
+    var clone=document.documentElement.cloneNode(true);
+    // 書き出し時は初期画面（選択画面）だけが見える状態に戻し、
+    // 記録データがファイルに一切残らないよう、動的に描画された内容をすべて初期値に戻す
+    var done=clone.querySelector("#view-done");
+    var status=clone.querySelector("#view-status");
+    var home=clone.querySelector("#view-home");
+    if(done) done.classList.add("hidden");
+    if(status) status.classList.add("hidden");
+    if(home) home.classList.remove("hidden");
+    function setText(sel, txt){
+      var el=clone.querySelector(sel);
+      if(el) el.textContent=txt;
+    }
+    function clearHtml(sel){
+      var el=clone.querySelector(sel);
+      if(el) el.innerHTML="";
+    }
+    setText("#today-date","—");
+    setText("#today-week","—");
+    setText("#now-clock","--:--");
+    setText("#today-med-count","0");
+    setText("#today-meal-count","0");
+    clearHtml("#today-times");
+    setText("#done-title","記録しました");
+    setText("#done-when","—");
+    var badge=clone.querySelector("#done-badge");
+    if(badge) badge.setAttribute("class","done-badge med");
+    var toast=clone.querySelector("#done-toast");
+    if(toast){ toast.textContent=""; toast.classList.add("hidden"); }
+    var undoBtn=clone.querySelector("#btn-undo");
+    if(undoBtn) undoBtn.classList.remove("hidden");
+    setText("#month-label","—");
+    setText("#msum-med","0");
+    setText("#msum-meal","0");
+    setText("#msum-days","0");
+    clearHtml("#cal-grid");
+    setText("#detail-date","—");
+    setText("#detail-sub","—");
+    clearHtml("#detail-list");
+    var dEmpty=clone.querySelector("#detail-empty");
+    if(dEmpty) dEmpty.classList.add("hidden");
+    var html="<!doctype html>\n"+clone.outerHTML;
+    var blob=new Blob([html], {type:"text/html;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url;
+    a.download="index.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+
+  /* ---------- イベント ---------- */
+  document.getElementById("btn-meal").addEventListener("click", function(){ doRecord("meal"); });
+  document.getElementById("btn-med").addEventListener("click", function(){ doRecord("med"); });
+  document.getElementById("btn-status").addEventListener("click", function(){
+    var n=new Date(); viewY=n.getFullYear(); viewM=n.getMonth(); selectedKey=dateKeyOf(n);
+    renderCalendar(); show("status");
+  });
+  document.getElementById("btn-done-status").addEventListener("click", function(){
+    var n=new Date(); viewY=n.getFullYear(); viewM=n.getMonth(); selectedKey=dateKeyOf(n);
+    renderCalendar(); show("status");
+  });
+  function goHome(){ renderToday(); show("home"); }
+  document.getElementById("btn-done-logout").addEventListener("click", goHome);
+  document.getElementById("btn-status-logout").addEventListener("click", goHome);
+  document.getElementById("btn-back-home").addEventListener("click", goHome);
+  document.getElementById("btn-undo").addEventListener("click", function(){
+    if(!lastRecordId) return;
+    records=records.filter(function(x){ return x.id!==lastRecordId; });
+    save();
+    lastRecordId=null;
+    document.getElementById("btn-undo").classList.add("hidden");
+    var toast=document.getElementById("done-toast");
+    toast.textContent="記録を取り消しました。";
+    toast.classList.remove("hidden");
+    renderToday();
+  });
+  document.getElementById("btn-prev-month").addEventListener("click", function(){
+    viewM--; if(viewM<0){ viewM=11; viewY--; } renderCalendar();
+  });
+  document.getElementById("btn-next-month").addEventListener("click", function(){
+    viewM++; if(viewM>11){ viewM=0; viewY++; } renderCalendar();
+  });
+  document.getElementById("btn-this-month").addEventListener("click", function(){
+    var n=new Date(); viewY=n.getFullYear(); viewM=n.getMonth(); selectedKey=dateKeyOf(n);
+    renderCalendar();
+  });
+  document.getElementById("btn-download").addEventListener("click", downloadHtml);
+
+  /* ---------- 初期表示・時計 ---------- */
+  renderToday();
+  setInterval(renderHomeHead, 30000);
+})();
+</script>
+</body>
+</html>
